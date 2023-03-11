@@ -1,10 +1,11 @@
-
 from __future__ import print_function
 
 from keras.models import Model
-from keras.layers import Input, LSTM, Dense,TimeDistributed
+from keras.layers import Input, LSTM, Dense, TimeDistributed
 import numpy as np
 import keras.backend as K
+
+
 def get_dataset(data_path, num_samples):
     input_texts = []
     target_texts = []
@@ -20,23 +21,23 @@ def get_dataset(data_path, num_samples):
 
         input_texts.append(input_text)
         target_texts.append(target_text)
-        
+
         for char in input_text:
             if char not in input_characters:
                 input_characters.add(char)
         for char in target_text:
             if char not in target_characters:
                 target_characters.add(char)
-    return input_texts,target_texts,input_characters,target_characters
+    return input_texts, target_texts, input_characters, target_characters
 
 
-#------------------------------------------#
+# ------------------------------------------#
 #   init初始化部分
-#------------------------------------------#
+# ------------------------------------------#
 # 每一次输入64个batch
 batch_size = 64
 # 训练一百个世代
-epochs = 100    
+epochs = 100
 # 256维神经元
 latent_dim = 256
 # 一共10000个样本
@@ -51,7 +52,7 @@ data_path = 'fra.txt'
 
 # input_characters用到的所有输入字符,如a,b,c,d,e,……,.,!等
 # target_characters用到的所有输出字符
-input_texts,target_texts,input_characters,target_characters = get_dataset(data_path, num_samples)
+input_texts, target_texts, input_characters, target_characters = get_dataset(data_path, num_samples)
 
 # 对字符进行排序
 input_characters = sorted(list(input_characters))
@@ -75,11 +76,11 @@ input_token_index = dict(
 target_token_index = dict(
     [(char, i) for i, char in enumerate(target_characters)])
 
-#---------------------------------------------------------------------------#
+# ---------------------------------------------------------------------------#
 
-#--------------------------------------#
+# --------------------------------------#
 #   改变数据集的格式
-#--------------------------------------#
+# --------------------------------------#
 encoder_input_data = np.zeros(
     (len(input_texts), max_encoder_seq_length, num_encoder_tokens),
     dtype='float32')
@@ -89,7 +90,6 @@ decoder_input_data = np.zeros(
 decoder_target_data = np.zeros(
     (len(input_texts), max_decoder_seq_length, num_decoder_tokens),
     dtype='float32')
-
 
 for i, (input_text, target_text) in enumerate(zip(input_texts, target_texts)):
     # 为末尾加上" "空格
@@ -104,7 +104,7 @@ for i, (input_text, target_text) in enumerate(zip(input_texts, target_texts)):
             decoder_target_data[i, t - 1, target_token_index[char]] = 1.
     decoder_input_data[i, t + 1:, target_token_index[' ']] = 1.
     decoder_target_data[i, t:, target_token_index[' ']] = 1.
-#---------------------------------------------------------------------------#
+# ---------------------------------------------------------------------------#
 
 
 encoder_inputs = Input(shape=(None, num_encoder_tokens))
@@ -115,7 +115,8 @@ encoder_states = [state_h, state_c]
 
 decoder_inputs = Input(shape=(None, num_decoder_tokens))
 
-decoder_outputs, _, _ = LSTM(latent_dim, return_sequences=True, return_state=True)(decoder_inputs,initial_state=encoder_states)
+decoder_outputs, _, _ = LSTM(latent_dim, return_sequences=True, return_state=True)(decoder_inputs,
+                                                                                   initial_state=encoder_states)
 
 decoder_outputs = TimeDistributed(Dense(num_decoder_tokens, activation='softmax'))(decoder_outputs)
 
@@ -137,7 +138,7 @@ encoder_inputs = Input(shape=(None, num_encoder_tokens))
 encoder_outputs, state_h, state_c = LSTM(latent_dim, return_state=True)(encoder_inputs)
 encoder_states = [state_h, state_c]
 encoder_model = Model(encoder_inputs, encoder_states)
-encoder_model.load_weights("out.h5",by_name=True)
+encoder_model.load_weights("out.h5", by_name=True)
 encoder_model.summary()
 
 decoder_inputs = Input(shape=(None, num_decoder_tokens))
@@ -147,7 +148,7 @@ decoder_state_input_c = Input(shape=(latent_dim,))
 decoder_states_inputs = [decoder_state_input_h, decoder_state_input_c]
 
 decoder_outputs, state_h, state_c = LSTM(latent_dim, return_sequences=True,
-                                        return_state=True)(decoder_inputs, initial_state=decoder_states_inputs)
+                                         return_state=True)(decoder_inputs, initial_state=decoder_states_inputs)
 
 decoder_states = [state_h, state_c]
 
@@ -155,7 +156,7 @@ decoder_outputs = TimeDistributed(Dense(num_decoder_tokens, activation='softmax'
 decoder_model = Model(
     [decoder_inputs] + decoder_states_inputs,
     [decoder_outputs] + decoder_states)
-decoder_model.load_weights("out.h5",by_name=True)
+decoder_model.load_weights("out.h5", by_name=True)
 # 建立序号到字母的映射
 reverse_input_char_index = dict(
     (i, char) for char, i in input_token_index.items())
@@ -186,12 +187,11 @@ def decode_sequence(input_seq):
         target_seq = np.zeros((1, 1, num_decoder_tokens))
         target_seq[0, 0, sampled_token_index] = 1.
 
-
     return decoded_sentence
 
 
 for seq_index in range(100):
-    input_seq = np.expand_dims(encoder_input_data[seq_index],axis=0)
+    input_seq = np.expand_dims(encoder_input_data[seq_index], axis=0)
     decoded_sentence = decode_sequence(input_seq)
     print('-')
     print('Input sentence:', input_texts[seq_index])

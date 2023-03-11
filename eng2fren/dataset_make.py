@@ -1,4 +1,6 @@
 import numpy as np
+
+
 def get_dataset(data_path, num_samples):
     input_texts = []
     target_texts = []
@@ -14,14 +16,14 @@ def get_dataset(data_path, num_samples):
 
         input_texts.append(input_text)
         target_texts.append(target_text)
-        
+
         for char in input_text:
             if char not in input_characters:
                 input_characters.add(char)
         for char in target_text:
             if char not in target_characters:
                 target_characters.add(char)
-    return input_texts,target_texts,input_characters,target_characters
+    return input_texts, target_texts, input_characters, target_characters
 
 
 # 一共10000个样本
@@ -36,7 +38,7 @@ data_path = 'fra.txt'
 
 # input_characters用到的所有输入字符,如a,b,c,d,e,……,.,!等
 # target_characters用到的所有输出字符
-input_texts,target_texts,input_characters,target_characters = get_dataset(data_path, num_samples)
+input_texts, target_texts, input_characters, target_characters = get_dataset(data_path, num_samples)
 
 # 对字符进行排序
 input_characters = sorted(list(input_characters))
@@ -60,11 +62,11 @@ input_token_index = dict(
 target_token_index = dict(
     [(char, i) for i, char in enumerate(target_characters)])
 
-#---------------------------------------------------------------------------#
+# ---------------------------------------------------------------------------#
 
-#--------------------------------------#
+# --------------------------------------#
 #   改变数据集的格式
-#--------------------------------------#
+# --------------------------------------#
 encoder_input_data = np.zeros(
     (len(input_texts), max_encoder_seq_length, num_encoder_tokens),
     dtype='float32')
@@ -72,18 +74,17 @@ encoder_input_data = np.zeros(
 decoder_input_data = np.zeros(
     (len(input_texts), max_decoder_seq_length, num_decoder_tokens),
     dtype='float32')
-    
+
 decoder_target_data = np.zeros(
     (len(input_texts), max_decoder_seq_length, num_decoder_tokens),
     dtype='float32')
-
 
 for i, (input_text, target_text) in enumerate(zip(input_texts, target_texts)):
     # 为末尾加上" "空格
     for t, char in enumerate(input_text):
         encoder_input_data[i, t, input_token_index[char]] = 1.
     encoder_input_data[i, t + 1:, input_token_index[' ']] = 1.
-    
+
     # 相当于前一个内容的识别结果，作为输入，传入到解码网络中
     for t, char in enumerate(target_text):
         decoder_input_data[i, t, target_token_index[char]] = 1.
@@ -92,4 +93,4 @@ for i, (input_text, target_text) in enumerate(zip(input_texts, target_texts)):
             decoder_target_data[i, t - 1, target_token_index[char]] = 1.
     decoder_input_data[i, t + 1:, target_token_index[' ']] = 1.
     decoder_target_data[i, t:, target_token_index[' ']] = 1.
-#---------------------------------------------------------------------------#
+# ---------------------------------------------------------------------------#

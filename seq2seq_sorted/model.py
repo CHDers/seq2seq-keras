@@ -1,6 +1,6 @@
 from keras.models import Sequential
 from keras.layers.core import Activation, RepeatVector, Dropout, Dense
-from keras.layers import TimeDistributed,Input
+from keras.layers import TimeDistributed, Input
 from keras.models import Model
 from keras.layers.recurrent import LSTM
 import numpy as np
@@ -36,7 +36,7 @@ batch_size = 64
 STEP_SIZE = 10
 INPUT_SIZE = 75
 CELL_SIZE = 100
-inputs = Input([STEP_SIZE,INPUT_SIZE])
+inputs = Input([STEP_SIZE, INPUT_SIZE])
 x = LSTM(CELL_SIZE, input_shape=(STEP_SIZE, INPUT_SIZE))(inputs)
 x = Dropout(0.25)(x)
 # CELL_SIZE-> STEP_SIZE,CELL_SIZE
@@ -53,7 +53,7 @@ x = TimeDistributed(Dense(INPUT_SIZE))(x)
 x = Dropout(0.5)(x)
 x = Activation('softmax')(x)
 
-model = Model(inputs,x)
+model = Model(inputs, x)
 model.summary()
 model.compile(loss='categorical_crossentropy', optimizer='adam',
               metrics=['accuracy'])
@@ -61,7 +61,7 @@ model.compile(loss='categorical_crossentropy', optimizer='adam',
 for ind, (X, Y) in enumerate(batch_gen(batch_size, STEP_SIZE, INPUT_SIZE)):
     loss, acc = model.train_on_batch(X, Y)
     if ind % 250 == 0:
-        print("ind:",ind)
+        print("ind:", ind)
         testX = np.random.randint(INPUT_SIZE, size=(1, STEP_SIZE))
         test = encode(testX, STEP_SIZE, INPUT_SIZE)
         print("before is")
